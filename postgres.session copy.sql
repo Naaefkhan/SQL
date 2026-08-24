@@ -83,7 +83,7 @@ select r.skill_id,sd.skills,r.skill_count from remote r
 inner join skills_dim sd 
 on r.skill_id=sd.skill_id
 order by skill_count desc 
-limit 5;
+limit 10;
 
 --Using CTE
 WITH jobs as(
