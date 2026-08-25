@@ -144,7 +144,7 @@ ORDER BY job_title_short, salary_year_avg DESC;
 A salary number alone doesn't tell us what we need to learn.
 
 By connecting high-paying jobs with their required skills, this analysis helps identify the technical skills that appear in premium job opportunities.
----
+
 
 ## 3. What skills are most in demand for Data Engineers?
 Salary isn't the only important factor.
@@ -267,16 +267,17 @@ Data Analyst job count
 The query only keeps skills that appear in more than 10 jobs in both career categories, helping avoid conclusions based on skills with extremely small sample sizes.
 
 SQL Concepts Used
-CASE WHEN
+`CASE WHEN
 AVG()
 COUNT()
 GROUP BY
 HAVING
-Conditional aggregation
+Conditional aggregation`
 
 The query:
 ### SQL Approach
-```SELECT
+```sql
+SELECT
     skills_dim.skills,
     ROUND(AVG(CASE WHEN job_title_short = 'Data Engineer' THEN salary_year_avg END), 0) AS de_avg_salary,
     COUNT(CASE WHEN job_title_short = 'Data Engineer' THEN job_postings_fact.job_id END) AS de_job_count,
@@ -357,15 +358,15 @@ Designing SQL queries around practical questions rather than simple data retriev
 
 # 🚀 Future Improvements
 This project can be extended by adding:
-📍 Location-based salary comparisons
-🏢 Company-level analysis
-📅 Salary trends over time
-☁️ Cloud skill comparisons
-📊 Data visualization using Power BI or Tableau
-🧑‍💼 Experience-level analysis
-🌎 Comparison of remote vs non-remote opportunities
-📈 Skill combinations that frequently appear together
-💼 Entry-level vs senior-level job analysis
+- 📍 Location-based salary comparisons
+- 🏢 Company-level analysis
+- 📅 Salary trends over time
+- ☁️ Cloud skill comparisons
+- 📊 Data visualization using Power BI or Tableau
+- 🧑‍💼 Experience-level analysis
+- 🌎 Comparison of remote vs non-remote opportunities
+- 📈 Skill combinations that frequently appear together
+- 💼 Entry-level vs senior-level job analysis
 
 # 🏁 Conclusion
 This project provides a SQL-based comparison of the Data Engineer and Data Analyst job markets.
@@ -375,6 +376,6 @@ This approach provides a more practical understanding of the skills employers va
 Ultimately, the project demonstrates how SQL can transform raw job-posting data into actionable insights for career and skill development decisions.
 
 # 👨‍💻 Author
-Naaef Khan
-Data Science | SQL | Data Analytics | Data Engineering
-Project Focus: SQL-based Data Engineer vs Data Analyst Job Market Analysis
+- Naaef Khan
+- Data Science | SQL | Data Analytics | Data Engineering
+- Project Focus: SQL-based Data Engineer vs Data Analyst Job Market Analysis
