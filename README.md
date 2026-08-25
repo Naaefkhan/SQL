@@ -1,5 +1,5 @@
 # Introduction
-I have created this project to analyze the market of **Data Engineer Job Profile** to understand the skills, salaries, and job-market demand associated with the role.
+I have created this project to analyze the market of **Data Engineer V/S Data Analyst Job Profile** to understand the skills, salaries, and job-market demand associated with the roles and which .
 
 The goal of this analysis is to answer five practical questions:
 
@@ -9,14 +9,14 @@ The goal of this analysis is to answer five practical questions:
 4. Which skills are associated with higher salaries?
 5. What are the most optimal skills to learn?
 
-The analysis was performed using SQL on a job-postings dataset. I used SQL joins, filtering, aggregation, CTEs, `COUNT()`, `AVG()`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, and `STRING_AGG()` to explore the data.
+The analysis was performed using SQL on a job-postings dataset. I used SQL joins, filtering, aggregation, CASE, CTEs, `COUNT()`, `AVG()`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, and `STRING_AGG()` to explore the data.
 
 SQL queries? check them out here: [project_sql](./SQL_Data_Analysis_Project/)
 # Background
 The questions I wanted to answer were:
-1. What are the top paying data engineer jobs?
+1. What are the top paying jobs for data analyst v/s data engineer?
 2. What skills are required for these top-paying jobs?
-3. What skills are most in demand for data engineers?
+3. What skills are most in demand for data engineers v/s for data analysts?
 4. Which skills are associated with higher salaries?
 5. What are the most optimal skills to learn?
 # Tools I Used
@@ -41,69 +41,70 @@ The query:
 ### SQL approach
 
 ```sql
-SELECT
-    job_id,
-    job_title,
-    job_location,
-    salary_year_avg,
-    job_posted_date,
-    name AS company_name
-FROM job_postings_fact
-LEFT JOIN company_dim
-    ON job_postings_fact.company_id = company_dim.company_id
-WHERE job_title_short = 'Data Engineer'
-  AND job_location = 'Anywhere'
-  AND salary_year_avg IS NOT NULL
-ORDER BY salary_year_avg DESC
-LIMIT 10;
+WITH ranked_jobs AS (
+    SELECT 
+        job_id, job_title, job_title_short,
+        salary_year_avg,
+        name AS company_name,
+        ROW_NUMBER() OVER (
+            PARTITION BY job_title_short 
+            ORDER BY salary_year_avg DESC
+        ) AS rn
+    FROM job_postings_fact
+    LEFT JOIN company_dim 
+        ON job_postings_fact.company_id = company_dim.company_id
+    WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
+        AND job_location = 'Anywhere'
+        AND salary_year_avg IS NOT NULL
+)
+SELECT job_id, job_title, job_title_short, salary_year_avg, company_name
+FROM ranked_jobs
+WHERE rn <= 10
+ORDER BY job_title_short, salary_year_avg DESC;
 ```
-! [Top Paying Jobs](/assets/01_top_paying_data_engineer_jobs_sorted.png)
-### Analysis
 
-This gives an overview of the highest-paying Data Engineer opportunities in the dataset and helps identify companies and job titles associated with the highest salaries.
 
 ---
 
 ## 2. What skills are required for these top-paying jobs?
 
-After identifying the top-paying Data Engineer jobs, I analyzed the skills associated with those positions.
-
-I used a **CTE** to first identify the top 10 highest-paying jobs. I then joined those jobs with:
-
-- `skills_job_dim`
-- `skills_dim`
-
-This allowed me to connect each job with the skills mentioned in the dataset.
+Th
+    and salary_year_avg is nis allowed me to connect each job with the skills mentioned in the dataset.
 
 I used `STRING_AGG()` to combine multiple skills into a single row for each job, making the results easier to read.
 
 ```sql
---I wanted to see the skills combined in a single row, so i wrote this query.
-with top_paying_jobs as (
-    select job_id,job_title,
-    salary_year_avg,
-    name as company_name from
-    job_postings_fact 
-    LEFT JOIN company_dim on 
-    job_postings_fact.company_id=company_dim.company_id
-    WHERE job_title_short='Data Engineer' AND
-    job_location='Anywhere'
-    and salary_year_avg is not NULL
-    order by salary_year_avg desc
-    LIMIT 10
-    )
-select top_paying_jobs.*,
-string_agg(skills,chr(10) order by skills) as skills
- from top_paying_jobs
-inner join skills_job_dim on top_paying_jobs.job_id=skills_job_dim.job_id
-inner join skills_dim on skills_job_dim.skill_id=skills_dim.skill_id
-group by top_paying_jobs.job_id,
-top_paying_jobs.job_title,
-top_paying_jobs.salary_year_avg,
-top_paying_jobs.company_name
-order by salary_year_avg desc;
+
+WITH ranked_jobs AS (
+    SELECT 
+         job_id,job_title, job_title_short,
+        salary_year_avg,
+        name AS company_name,
+        ROW_NUMBER() OVER (
+            PARTITION BY  job_title_short
+            ORDER BY salary_year_avg DESC
+        ) AS rn
+    FROM job_postings_fact
+    LEFT JOIN company_dim 
+        ON job_postings_fact.company_id = company_dim.company_id
+    WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
+        AND job_location = 'Anywhere'
+        AND salary_year_avg IS NOT NULL
+)
+SELECT ranked_jobs.*,string_agg(skills,chr(10) order by skills) as skills
+FROM ranked_jobs
+INNER JOIN skills_job_dim on ranked_jobs.job_id=skills_job_dim.job_id
+INNER JOIN skills_dim on skills_job_dim.skill_id=skills_dim.skill_id
+WHERE rn <= 10
+GROUP BY ranked_jobs.job_id,
+ranked_jobs.job_title,
+ranked_jobs.job_title_short,
+ranked_jobs.salary_year_avg,
+ranked_jobs.company_name,
+ranked_jobs.rn
+ORDER BY job_title_short, salary_year_avg DESC;
 ```
-### Why I used a CTE
+### Why I used multiple CTEs
 
 The CTE separates the analysis into two logical steps:
 
@@ -111,7 +112,7 @@ The CTE separates the analysis into two logical steps:
 2. Find the skills required for those jobs.
 
 This makes the query easier to understand and maintain.
-![Top paying job skills](./assets/02_top_paying_job_skills.png)
+
 ### Analysis
 
 The important takeaway is that high-paying Data Engineering roles generally require a **combination of skills**, rather than one technology alone.
