@@ -263,7 +263,7 @@ SELECT
     ORDER BY avg_salary DESC, total_jobs DESC
     LIMIT 20;
 ```
-![Optimal skills](./assts/05_optimal_skills.png)
+![Optimal skills](./assets/05_optimal_skills.png)
 # What I Learned
 
 Through this project, I learned how SQL can be used to answer real-world career and job-market questions rather than simply retrieving data.
@@ -326,8 +326,99 @@ Instead of only writing simple `SELECT` statements, this project helped me pract
 
 # Conclusion
 
-This project provided a practical look at the Data Engineering job market by analyzing **salary, job demand, and required skills**.
+## 1. What are the top-paying Data Engineer jobs?
 
+### Insights
+
+* The highest salaries in the dataset reach **$325,000 per year**, with two Data Engineer positions at Engtal.
+* The top 3 positions have salaries of **$325K, $325K, and $300K**, showing significant earning potential in Data Engineering.
+* Several senior-level roles such as **Staff Data Engineer, Principal Data Engineer, Director of Engineering, and Data Engineering Manager** appear in the top 10.
+* The results suggest that **senior and specialized Data Engineering roles** tend to dominate the highest-paying positions.
+* The presence of different companies and job titles among the top positions shows that high salaries are not limited to one specific company or title.
+
+**Overall takeaway:**
+
+> Data Engineering offers strong salary potential, particularly at senior, staff, principal, management, and specialized engineering levels.
+
+---
+
+## 2. What skills are required for these top-paying jobs?
+
+### Key Insights
+
+* **Python** is the most common skill, appearing in **7 out of the 10** top-paying jobs.
+* **Spark** appears in **5 out of 10** jobs, highlighting the importance of distributed data processing in high-paying roles.
+* **Hadoop, Kafka, and Scala** each appear in **3 jobs**.
+* Other technologies such as **Databricks, Kubernetes, PySpark, Pandas, NumPy, and SQL** also appear among the top-paying positions.
+* The skills cover several areas including **programming, big-data processing, cloud, orchestration, and data infrastructure**.
+
+**Overall takeaway:**
+
+> High-paying Data Engineer jobs generally require a **combination of skills**, with Python and Spark being particularly prominent rather than relying on one technology alone.
+
+---
+
+## 3. What skills are most in demand for Data Engineers?
+
+### Key Insights
+
+* **SQL** is the most demanded skill, appearing in **14,213 job postings**.
+* **Python** is a very close second with **13,893 job postings**, only **320 fewer than SQL**.
+* **AWS** is the third most demanded skill with **8,570 postings**, showing strong demand for cloud computing.
+* **Azure** appears in **6,997 postings**, while **Spark** appears in **6,612**.
+* SQL and Python are significantly more common than the other three skills, making them especially important foundational skills for Data Engineers.
+
+**Overall takeaway:**
+
+> **SQL and Python are the two strongest foundational skills**, while AWS, Azure, and Spark are important complementary skills for the Data Engineering job market.
+
+---
+
+## 4. Which skills are associated with higher salaries?
+
+### Key Insights
+
+* **Assembly** has the highest average salary at **$192,500**.
+* It is followed by **Mongo ($182,223)** and **ggplot2 ($176,250)**.
+* **Rust ($172,819)** and **Clojure ($170,867)** are also associated with relatively high salaries.
+* Interestingly, some of the highest-paying skills are **specialized or niche technologies** rather than the most commonly demanded Data Engineering skills.
+* For example, **Kubernetes has an average salary of $158,190**, while **Kafka has $150,549**.
+* This demonstrates that **high salary and high demand are not necessarily the same thing**.
+
+**Overall takeaway:**
+
+> Some niche technologies are associated with very high salaries, but salary alone does not make a skill the best choice to learn because job availability also matters.
+
+---
+
+## 5. What are the most optimal skills to learn?
+
+### Key Insights
+
+* **Kubernetes** has the highest average salary among the filtered skills at **$158,190**, with 56 job postings.
+* **Kafka** stands out as a particularly interesting skill because it combines a high average salary of **$150,549** with **134 job postings**.
+* **Spark** has the highest demand among the skills shown, with **237 job postings**, while having an average salary of **$139,838**.
+* **Airflow** also has strong demand with **151 postings** and an average salary of **$138,518**.
+* **Java** has 139 postings and an average salary of **$138,087**, making it another relatively high-demand skill.
+* Skills such as **NumPy and Cassandra** have high salaries but considerably fewer job postings, indicating a more specialized market.
+* This shows the trade-off between **salary and demand**: a skill with the highest salary isn't necessarily the most practical skill to prioritize.
+
+**Overall takeaway:**
+
+> The most optimal skills should be evaluated based on **both demand and salary**. Skills such as **Kafka, Spark, Airflow, and Java** provide a stronger balance between market demand and salary than simply choosing the highest-paying niche skill.
+
+---
+
+### 🔥 Overall Project Insight
+
+After combining all five analyses, the biggest conclusion is:
+> **SQL and Python are essential foundational skills because of their extremely high demand, while technologies such as Spark, Kafka, Airflow, cloud platforms, and Kubernetes can help build a more specialized and potentially higher-paying Data Engineering skill set.**
+This gives your project a much stronger story:
+**High-paying jobs → Required skills → Market demand → Salary → Optimal skills**
+
+That progression makes the analysis feel like an actual **career-oriented data analysis project**, rather than just five unrelated SQL queries.
+
+This project provided a practical look at the Data Engineering job market by analyzing **salary, job demand, and required skills**.
 The analysis shows that choosing skills based on only one factor can be misleading. The most useful approach is to consider both **how frequently employers request a skill and the salary associated with jobs requiring it**.
 
 The analysis of top-paying jobs also shows that higher-paying Data Engineering roles tend to require a combination of technical skills rather than expertise in a single tool.
