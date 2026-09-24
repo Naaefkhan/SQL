@@ -1,24 +1,31 @@
 # Introduction
-I have created this project to analyze the market of **Data Engineer Job Profile** to understand the skills, salaries, and job-market demand associated with the role.
+Choosing between Data Engineering and Data Analytics can be difficult because both careers involve working with data, but they require different skill sets and offer different career opportunities.
 
-The goal of this analysis is to answer five practical questions:
+This project uses SQL and job posting data to compare the Data Engineer and Data Analyst job markets from multiple perspectives.
 
-1. What are the top-paying Data Engineer jobs?
-2. What skills are required for these top-paying jobs?
-3. What skills are most in demand for Data Engineers?
-4. Which skills are associated with higher salaries?
-5. What are the most optimal skills to learn?
+Rather than looking only at salary, this analysis focuses on:
+💰 Highest-paying jobs
+🛠️ Skills required for the highest-paying jobs
+📈 Most in-demand skills
+💵 Highest-paying skills
+⚖️ Skills that can be compared across both career paths
 
-The analysis was performed using SQL on a job-postings dataset. I used SQL joins, filtering, aggregation, CTEs, `COUNT()`, `AVG()`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, and `STRING_AGG()` to explore the data.
+The goal is to identify the differences between the two roles and understand which skills provide the strongest combination of salary and job-market demand.
+
+
+The analysis was performed using SQL on a job-postings dataset. I used SQL joins, filtering, aggregation, CASE, CTEs, `COUNT()`, `AVG()`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, and `STRING_AGG()` to explore the data.
 
 SQL queries? check them out here: [project_sql](./SQL_Data_Analysis_Project/)
 # Background
-The questions I wanted to answer were:
-1. What are the top paying data engineer jobs?
-2. What skills are required for these top-paying jobs?
-3. What skills are most in demand for data engineers?
-4. Which skills are associated with higher salaries?
-5. What are the most optimal skills to learn?
+The main objectives of this project are:
+
+Identify the highest-paying Data Engineer and Data Analyst jobs.
+1. Find the skills required by high-paying positions.
+2. Identify the most in-demand skills for both roles.
+3. Determine which skills are associated with the highest average salaries.
+4. Compare common skills between Data Engineering and Data Analytics.5.
+5. Understand which skills may provide better opportunities for someone deciding between the two career paths.
+
 # Tools I Used
 For my deep dive into the data engineer job market,
 I harnessed the power of several key tools:
@@ -28,399 +35,521 @@ I harnessed the power of several key tools:
 - **Git & GitHub**: Essential for version control and sharing my SQL scripts and analysis, ensuring collaboration and project tracking.
 # The Analysis
 
-1. What are the top-paying Data Engineer jobs?
-The first analysis identifies the highest-paying Data Engineer positions.
-The query:
-- Filters the dataset for **Data Engineer** positions.
-- Keeps jobs where salary information is available.
-- Focuses on remote/anywhere jobs.
-- Joins the job-postings table with the company table to obtain company names.
-- Sorts jobs by annual salary in descending order.
-- Returns the top 10 positions.
+1. What are the top-paying Data Engineer V/S Data Analyst jobs?
+The first analysis identifies the top 10 highest-paying jobs separately for Data Engineers and Data Analysts.
 
-### SQL approach
+I used the `ROW_NUMBER()` window function with `PARTITION BY `job_title_short to rank jobs independently for each career. The analysis also filters for:
+
+Data Engineer and Data Analyst roles
+Remote jobs (Anywhere)
+Jobs with available annual salary information
+
+SQL Concepts Used
+`ROW_NUMBER()
+PARTITION BY
+ORDER BY
+LEFT JOIN
+CTE
+WHERE`
+
+## SQL approach
 
 ```sql
-SELECT
-    job_id,
-    job_title,
-    job_location,
-    salary_year_avg,
-    job_posted_date,
-    name AS company_name
-FROM job_postings_fact
-LEFT JOIN company_dim
-    ON job_postings_fact.company_id = company_dim.company_id
-WHERE job_title_short = 'Data Engineer'
-  AND job_location = 'Anywhere'
-  AND salary_year_avg IS NOT NULL
-ORDER BY salary_year_avg DESC
-LIMIT 10;
+WITH ranked_jobs AS (
+    SELECT 
+        job_id, job_title, job_title_short,
+        salary_year_avg,
+        name AS company_name,
+        ROW_NUMBER() OVER (
+            PARTITION BY job_title_short 
+            ORDER BY salary_year_avg DESC
+        ) AS rn
+    FROM job_postings_fact
+    LEFT JOIN company_dim 
+        ON job_postings_fact.company_id = company_dim.company_id
+    WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
+        AND job_location = 'Anywhere'
+        AND salary_year_avg IS NOT NULL
+)
+SELECT job_id, job_title, job_title_short, salary_year_avg, company_name
+FROM ranked_jobs
+WHERE rn <= 10
+ORDER BY job_title_short, salary_year_avg DESC;
 ```
-! [Top Paying Jobs](/assets/01_top_paying_data_engineer_jobs_sorted.png)
-### Analysis
+## Analysis -Top Paying Jobs
+The first analysis identifies the top 10 highest-paying Data Analyst and Data Engineer positions based on average yearly salary.
+To ensure a fair comparison, the analysis focuses on remote (Anywhere) positions with available annual salary data. `ROW_NUMBER()` with `PARTITION BY job_title_short` is used to rank the highest-paying jobs separately for Data Analysts and Data Engineers.
 
-This gives an overview of the highest-paying Data Engineer opportunities in the dataset and helps identify companies and job titles associated with the highest salaries.
+### 🔍 Key Findings
+###  Data Analyst
+
+The highest-paying Data Analyst position in the analysis is **Data Analyst at Mantys** with an annual salary of $650,000.
+
+Other highly paid positions include:
+
+- Director of Analytics — Meta: $336,500
+- Associate Director – Data Insights — AT&T: $255,829.50
+- Data Analyst, Marketing — Pinterest: $232,423
+- Data Analyst (Hybrid/Remote) — UCLA Health: $217,000
+
+The results also show several Principal and Director-level positions, indicating that seniority and specialization have a strong relationship with higher salaries.
+
+### Data Engineer
+
+The highest-paying Data Engineering positions include:
+
+- Data Engineer — Engtal: $325,000
+- Data Engineer — Durlston Partners: $300,000
+- Director of Engineering – Data Platform — Twitch: $251,000
+- Staff Data Engineer — Signify Technology: $250,000
+- Principal Data Engineer — Signify Technology: $250,000
+
+Several positions are at the Staff, Principal, and Manager/Director levels, showing that advanced Data Engineering roles can also command very high salaries.
 
 ---
 
 ## 2. What skills are required for these top-paying jobs?
 
-After identifying the top-paying Data Engineer jobs, I analyzed the skills associated with those positions.
+Finding a high-paying job is only the first step.
 
-I used a **CTE** to first identify the top 10 highest-paying jobs. I then joined those jobs with:
+The next question is:
 
-- `skills_job_dim`
-- `skills_dim`
+What skills do these high-paying jobs require?
 
-This allowed me to connect each job with the skills mentioned in the dataset.
+For this analysis, I took the top 10 jobs from each career and joined them with the skills tables.
 
-I used `STRING_AGG()` to combine multiple skills into a single row for each job, making the results easier to read.
+I used `STRING_AGG()` to combine all skills associated with each job into a single result, making it easier to understand the complete skill requirements of high-paying positions.
+
+SQL Concepts Used
+`CTE
+ROW_NUMBER()
+PARTITION BY
+INNER JOIN
+STRING_AGG()
+GROUP BY`
+
+I also used `STRING_AGG()` to combine multiple skills into a single row for each job, making the results easier to read.
 
 ```sql
---I wanted to see the skills combined in a single row, so i wrote this query.
-with top_paying_jobs as (
-    select job_id,job_title,
-    salary_year_avg,
-    name as company_name from
-    job_postings_fact 
-    LEFT JOIN company_dim on 
-    job_postings_fact.company_id=company_dim.company_id
-    WHERE job_title_short='Data Engineer' AND
-    job_location='Anywhere'
-    and salary_year_avg is not NULL
-    order by salary_year_avg desc
-    LIMIT 10
-    )
-select top_paying_jobs.*,
-string_agg(skills,chr(10) order by skills) as skills
- from top_paying_jobs
-inner join skills_job_dim on top_paying_jobs.job_id=skills_job_dim.job_id
-inner join skills_dim on skills_job_dim.skill_id=skills_dim.skill_id
-group by top_paying_jobs.job_id,
-top_paying_jobs.job_title,
-top_paying_jobs.salary_year_avg,
-top_paying_jobs.company_name
-order by salary_year_avg desc;
+
+WITH ranked_jobs AS (
+    SELECT 
+         job_id,job_title, job_title_short,
+        salary_year_avg,
+        name AS company_name,
+        ROW_NUMBER() OVER (
+            PARTITION BY  job_title_short
+            ORDER BY salary_year_avg DESC
+        ) AS rn
+    FROM job_postings_fact
+    LEFT JOIN company_dim 
+        ON job_postings_fact.company_id = company_dim.company_id
+    WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
+        AND job_location = 'Anywhere'
+        AND salary_year_avg IS NOT NULL
+)
+SELECT ranked_jobs.*,string_agg(skills,chr(10) order by skills) as skills
+FROM ranked_jobs
+INNER JOIN skills_job_dim on ranked_jobs.job_id=skills_job_dim.job_id
+INNER JOIN skills_dim on skills_job_dim.skill_id=skills_dim.skill_id
+WHERE rn <= 10
+GROUP BY ranked_jobs.job_id,
+ranked_jobs.job_title,
+ranked_jobs.job_title_short,
+ranked_jobs.salary_year_avg,
+ranked_jobs.company_name,
+ranked_jobs.rn
+ORDER BY job_title_short, salary_year_avg DESC;
 ```
-### Why I used a CTE
+## Key Findings
+### 📊 Data Analyst
 
-The CTE separates the analysis into two logical steps:
+Several skills appear repeatedly across the highest-paying Data Analyst positions.
 
-1. Find the top-paying jobs.
-2. Find the skills required for those jobs.
+Most noticeable skills:
 
-This makes the query easier to understand and maintain.
-![Top paying job skills](./assets/02_top_paying_job_skills.png)
-### Analysis
+- SQL — appears across almost every listed position
+- Python — frequently required
+- Tableau — common in several senior analyst roles
+- R — appears in multiple positions
+- Pandas & NumPy — found in more technical analyst roles
+- Excel — still appears in senior/high-paying analyst positions
+- Snowflake — appears in several positions
+- AWS / Azure — cloud skills appear in senior roles
+- Power BI — appears in analytics and business intelligence-oriented positions
 
-The important takeaway is that high-paying Data Engineering roles generally require a **combination of skills**, rather than one technology alone.
+For example, the Associate Director – Data Insights role at AT&T requires a broad combination of **AWS, Azure, Databricks, Excel, Pandas, Power BI, PySpark, Python, R, SQL, and Tableau.**
 
-The skills appearing across these jobs can be grouped into areas such as:
+This suggests that higher-paying Data Analyst roles can extend well beyond basic reporting and dashboard creation.
 
-- Programming
-- Databases and SQL
-- Cloud platforms
-- Data processing
-- Data warehousing
-- Big data technologies
-- Data engineering tools
+⚙️ Data Engineer
 
-This suggests that building a broad technical skill set is important when targeting higher-paying Data Engineering positions.
+The Data Engineering positions show a different skill pattern.
 
----
+Commonly observed skills include:
+
+- Python
+- Spark
+- PySpark
+- Hadoop
+- Kafka
+- Kubernetes
+- Databricks
+- Scala
+- Cloud platforms such as AWS, Azure and GCP
+- SQL
+
+The two $325,000 Data Engineer positions at Engtal, for example, list:
+
+`Hadoop + Kafka + Kubernetes + NumPy + Pandas + PySpark + Python + Spark`
+
+This combination demonstrates the more infrastructure- and distributed-processing-oriented nature of high-paying Data Engineering roles.
+
+### Why This Matters
+A salary number alone doesn't tell us what we need to learn.
+
+By connecting high-paying jobs with their required skills, this analysis helps identify the technical skills that appear in premium job opportunities.
 
 ## 3. What skills are most in demand for Data Engineers?
+Salary isn't the only important factor.
 
-The third analysis focuses on the number of Data Engineer job postings requiring each skill.
+A skill can have a high salary association but appear in relatively few job postings.
+Therefore, this analysis focuses on skill demand.
+The query counts how many job postings mention each skill and ranks the skills separately for Data Engineers and Data Analysts.
+Only remote (Anywhere) positions are considered.
 
-For this analysis, I focused on **Data Engineer jobs in India** and counted how many job postings were associated with each skill.
+SQL Concepts Used
+`CTE
+COUNT()
+GROUP BY
+ROW_NUMBER()
+PARTITION BY
+ORDER BY`
+
 
 ### SQL approach
 
 ```sql
-SELECT
-    skills,
-    COUNT(skills_job_dim.job_id) AS total_jobs
-FROM job_postings_fact
-INNER JOIN skills_job_dim
-    ON job_postings_fact.job_id = skills_job_dim.job_id
-INNER JOIN skills_dim
-    ON skills_job_dim.skill_id = skills_dim.skill_id
-WHERE job_title_short = 'Data Engineer'
-  AND job_location = 'Anywhere'
-GROUP BY skills
-ORDER BY total_jobs DESC
-LIMIT 5;
+WITH demand_skills AS (
+    SELECT 
+        job_title_short,
+        skills,
+        COUNT(skills_job_dim.job_id) AS total_jobs
+    FROM job_postings_fact
+    INNER JOIN skills_job_dim 
+        ON job_postings_fact.job_id = skills_job_dim.job_id
+    INNER JOIN skills_dim 
+        ON skills_job_dim.skill_id = skills_dim.skill_id
+    WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
+        AND job_location = 'Anywhere'
+    GROUP BY job_title_short, skills
+),
+ranked_skills AS (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY job_title_short
+            ORDER BY total_jobs DESC
+        ) AS rn
+    FROM demand_skills
+)
+SELECT *
+FROM ranked_skills
+WHERE rn <= 10
+ORDER BY job_title_short, total_jobs DESC;
 ```
-![In Demand skills](./assets/03_in_demand_skills.png)
-### Analysis
+### 📊 Data Analyst
 
-This identifies the five skills appearing most frequently in Data Engineer job postings in India.
+| Rank | Skill | Job Postings |
+|------|-------|--------------|
+| 1 | SQL | 7,291 |
+| 2 | Excel | 4,611 |
+| 3 | Python | 4,330 |
+| 4 | Tableau | 3,745 |
+| 5 | Power BI | 2,609 |
+| 6 | R | 2,142 |
+| 7 | SAS | 1,866 |
+| 8 | Looker | 868 |
+| 9 | Azure | 821 |
+| 10 | PowerPoint | 819 |
 
-The purpose of this analysis is to understand what employers are asking for most often, rather than simply focusing on the highest-paying technologies.
+### ⚙️ Data Engineer
+
+| Rank | Skill | Job Postings |
+|------|-------|--------------|
+| 1 | SQL | 14,213 |
+| 2 | Python | 13,893 |
+| 3 | AWS | 8,570 |
+| 4 | Azure | 6,997 |
+| 5 | Spark | 6,612 |
+| 6 | Airflow | 4,329 |
+| 7 | Snowflake | 4,053 |
+| 8 | Java | 3,801 |
+| 9 | Databricks | 3,716 |
+| 10 | Kafka | 3,391 |
+
+### Key Findings
+
+**SQL** is the strongest common skill across both career paths.
+
+It ranks #1 for both Data Analysts and Data Engineers, with 7,291 Data Analyst postings and 14,213 Data Engineer postings.
+
+**Python** also ranks extremely highly for both roles, making **SQL + Python** a strong foundational combination for someone who wants to keep both career options open.
+
+At the same time, the data shows that specialization matters:
+
+Data Analytics → `SQL + Excel + Python + BI/Visualization`
+
+Data Engineering → `SQL + Python + Cloud + Data Infrastructure`
+
+This analysis helps establish what employers are actually asking for, while the next analysis looks at the other side of the equation: which skills are associated with the highest salaries.
+
+For Data Engineers, SQL and Python dominate the job market, followed by cloud and data-engineering technologies.
+
+**AWS** and **Azure** have particularly strong demand, while **Spark, Airflow, Snowflake, Databricks, and Kafka** highlight the importance of data pipelines, distributed processing, cloud platforms, and modern data infrastructure.
 
 ---
 
 ## 4. Which skills are associated with higher salaries?
+For every skill, I calculate the average annual salary and rank the skills separately for Data Engineers and Data Analysts.
+The query uses `ROW_NUMBER()` with PARTITION BY job_title_short to create a separate ranking for each career.
 
-The fourth analysis looks at the relationship between individual skills and salary.
-
-Instead of counting demand, I calculated the **average annual salary** of jobs associated with each skill.
-
-The query:
-
-- Filters for Data Engineer roles.
-- Removes jobs without salary information.
-- Groups jobs by skill.
-- Calculates average salary.
-- Sorts skills by average salary.
-- Returns the top 25 skills by average salary.
+SQL Concepts Used
+`AVG()
+ROUND()
+GROUP BY
+CTE
+ROW_NUMBER()
+PARTITION BY
+Important Distinction`
 
 ### SQL approach
 
 ```sql
-SELECT
-    skills_dim.skills,
-    ROUND(AVG(salary_year_avg), 0) AS avg_salary
-FROM job_postings_fact
-INNER JOIN skills_job_dim
+
+WITH top_skills AS (SELECT
+skills_dim.skills,
+    ROUND(AVG(salary_year_avg), 0) AS avg_salary,job_title_short,
+    ROW_NUMBER() OVER (PARTITION BY job_title_short
+    ORDER BY ROUND(AVG(salary_year_avg), 0) DESC
+        ) AS rn
+    FROM job_postings_fact
+INNER JOIN skills_job_dim 
     ON job_postings_fact.job_id = skills_job_dim.job_id
-INNER JOIN skills_dim
+INNER JOIN skills_dim 
     ON skills_job_dim.skill_id = skills_dim.skill_id
-WHERE job_title_short = 'Data Engineer'
-  AND salary_year_avg IS NOT NULL
-  AND job_location = 'Anywhere'
-GROUP BY skills_dim.skills
-ORDER BY avg_salary DESC
-LIMIT 25;
+WHERE job_title_short IN('Data Engineer','Data Analyst')
+    AND salary_year_avg IS NOT NULL
+    AND job_location ='Anywhere'
+    GROUP BY skills_dim.skills,
+    job_title_short
+    )
+select top_skills.*
+from top_skills
+where rn<=10
+order by job_title_short ,rn ;
 ```
-![Top paying skills](./assets/04_top_paying_skills.png)
 ### Analysis
+The fourth analysis identifies the 10 skills associated with the highest average annual salaries for Data Analysts and Data Engineers.
 
-This analysis shows which skills are associated with higher average salaries.
+Unlike the previous analysis, which measures skill demand based on the number of job postings, this analysis focuses on the average salary associated with each skill. The skills are ranked separately for each role using `ROW_NUMBER()` with `PARTITION BY`.
 
-However, a high average salary does **not necessarily mean that learning the skill alone will result in a high salary**. Some skills may appear mainly in senior or specialized roles, which can raise their average salary.
+### 📊 Data Analyst
 
-Therefore, salary should be considered together with demand.
+| Rank | Skill | Average Salary |
+|---|---|---:|
+| 1 | PySpark | $208,172 |
+| 2 | Bitbucket | $189,155 |
+| 3 | Watson | $160,515 |
+| 4 | Couchbase | $160,515 |
+| 5 | DataRobot | $155,486 |
+| 6 | GitLab | $154,500 |
+| 7 | Swift | $153,750 |
+| 8 | Jupyter | $152,777 |
+| 9 | Pandas | $151,821 |
+| 10 | Elasticsearch | $145,000 |
+
+### ⚙️ Data Engineer
+
+| Rank | Skill | Average Salary |
+|---|---|---:|
+| 1 | Assembly | $192,500 |
+| 2 | Mongo | $182,223 |
+| 3 | ggplot2 | $176,250 |
+| 4 | Rust | $172,819 |
+| 5 | Clojure | $170,867 |
+| 6 | Perl | $169,000 |
+| 7 | Neo4j | $166,559 |
+| 8 | Solidity | $166,250 |
+| 9 | GraphQL | $162,547 |
+| 10 | Julia | $160,500 |
+### 🔍 Key Findings
+
+For Data Analysts, **PySpark** has the highest average salary association at $208,172, followed by **Bitbucket** at $189,155.
+
+For Data Engineers, **Assembly** ranks first with an average salary of $192,500, followed by **Mongo** at $182,223 and ggplot2 at $176,250.
+
+An important observation is that many of these skills are specialized technologies rather than the most commonly demanded skills from the previous analysis.
+
+For example, **SQL** ranks #1 in demand for both Data Analysts and Data Engineers, but it does not appear among the top 10 highest-paying skills.
+### ⚠️ Important Consideration
+
+These figures represent the average salary of job postings where each skill appeared. They should not be interpreted as the expected salary someone will receive simply by learning that skill.
+
+Some specialized skills may also have fewer job postings, meaning their average salary can be influenced by a smaller sample size.
+
+Therefore, salary should be considered together with demand when deciding which skills to learn.
 
 ---
 
 ## 5. What are the most optimal skills to learn?
+The final analysis compares skills that appear in both Data Engineering and Data Analytics.
 
-The final analysis combines the two most important factors:
+For each skill, I calculate:
 
-**Demand + Salary**
+- Data Engineer average salary
+- Data Engineer job count
+- Data Analyst average salary
+- Data Analyst job count
 
-Instead of asking only:
+The query only keeps skills that appear in more than 10 jobs in both career categories, helping avoid conclusions based on skills with extremely small sample sizes.
 
-> "Which skills are popular?"
+SQL Concepts Used
+`CASE WHEN
+AVG()
+COUNT()
+GROUP BY
+HAVING
+Conditional aggregation`
 
-or:
-
-> "Which skills have the highest salary?"
-
-I wanted to find skills that have a reasonable level of job demand while also being associated with higher salaries.
-
-### Method
-
-I calculated:
-
-- `total_jobs` → number of job postings requiring each skill
-- `avg_salary` → average salary associated with each skill
-
-I then used:
-
+The query:
+### SQL Approach
 ```sql
-HAVING COUNT(skills_job_dim.job_id) > 10
-```
-
-This removes skills that appear in only a small number of jobs.
-
-Finally, the results are ordered by:
-
-1. Average salary — highest first
-2. Total jobs — highest first
-
-```sql
-SELECT 
-    skills_dim.skill_id,
+SELECT
     skills_dim.skills,
-    COUNT(skills_job_dim.job_id) AS total_jobs,
-    ROUND(AVG(salary_year_avg),0) AS avg_salary
-    FROM job_postings_fact
-    INNER JOIN skills_job_dim
+    ROUND(AVG(CASE WHEN job_title_short = 'Data Engineer' THEN salary_year_avg END), 0) AS de_avg_salary,
+    COUNT(CASE WHEN job_title_short = 'Data Engineer' THEN job_postings_fact.job_id END) AS de_job_count,
+    ROUND(AVG(CASE WHEN job_title_short = 'Data Analyst' THEN salary_year_avg END), 0) AS da_avg_salary,
+    COUNT(CASE WHEN job_title_short = 'Data Analyst' THEN job_postings_fact.job_id END) AS da_job_count
+FROM job_postings_fact
+INNER JOIN skills_job_dim 
     ON job_postings_fact.job_id = skills_job_dim.job_id
-    INNER JOIN skills_dim
+INNER JOIN skills_dim 
     ON skills_job_dim.skill_id = skills_dim.skill_id
-    WHERE job_title_short = 'Data Engineer'
+WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
     AND salary_year_avg IS NOT NULL
-    AND job_work_from_home=True
-    GROUP BY 
-    skills_dim.skill_id,
-    skills_dim.skills
-    HAVING COUNT(skills_job_dim.job_id) > 10
-    ORDER BY avg_salary DESC, total_jobs DESC
-    LIMIT 20;
+    AND job_location = 'Anywhere'
+GROUP BY skills_dim.skills
+HAVING COUNT(CASE WHEN job_title_short = 'Data Engineer' THEN job_postings_fact.job_id END) > 10
+   AND COUNT(CASE WHEN job_title_short = 'Data Analyst' THEN job_postings_fact.job_id END) > 10
+ORDER BY  
+    ROUND(AVG(CASE WHEN job_title_short = 'Data Engineer' THEN salary_year_avg END), 0) 
+    - ROUND(AVG(CASE WHEN job_title_short = 'Data Analyst' THEN salary_year_avg END), 0) DESC;
 ```
-![Optimal skills](./assets/05_optimal_skills.png)
-# What I Learned
+### 🔍 Key Findings
 
-Through this project, I learned how SQL can be used to answer real-world career and job-market questions rather than simply retrieving data.
-
-### 1. Demand and salary are different measures
-
-A skill can be highly demanded without being associated with the highest salaries.
-
-Therefore, looking at only one metric can give an incomplete picture of the market.
-
-### 2. High-paying jobs require multiple skills
-
-The top-paying Data Engineer positions generally require combinations of programming, databases, cloud technologies, and data-processing tools.
-
-This shows that becoming a Data Engineer is not about mastering one technology.
-
-### 3. CTEs make complex analysis easier
-
-I used CTEs to break the problem into smaller steps.
+The most noticeable result is that Data Engineering(DE) has a higher average salary than Data Analytics(DA) for every skill in this comparison.
 
 For example:
 
-```text
-Find high-demand skills
-        ↓
-Calculate average salary
-        ↓
-Combine the results
-        ↓
-Filter and rank skills
-```
+- Spark: $139,838 DE vs $99,077 DA
+- SQL: $129,191 DE vs $97,237 DA
+- Python: $132,200 DE vs $101,397 DA
+- AWS: $132,865 DE vs $108,317 DA
+- Snowflake: $134,373 DE vs $112,948 DA
 
-This made the logic easier to understand and allowed me to build a more structured analysis.
+This suggests that the same technical skill can be associated with significantly different salary levels depending on the career path.
 
-### 4. SQL joins are essential for real-world datasets
+🏆 Strong Skills for Data Engineering
 
-The analysis required combining information from multiple tables:
+Several skills stand out because they combine high salary with substantial demand:
 
-- Job postings
-- Companies
-- Skills
-- Job-skill relationships
+- SQL — $129,191 average salary and 568 jobs
+- Python — $132,200 and 535 jobs
+- AWS — $132,865 and 367 jobs
+- Spark — $139,838 and 237 jobs
+- Snowflake — $134,373 and 202 jobs
+- Azure — $129,574 and 254 jobs
 
-Understanding how these tables connect is essential when working with relational datasets.
+These are particularly interesting because they aren't simply high-paying niche skills; they also have significant job demand.
 
-### 5. I learned to think beyond basic SQL queries
+📊 Strong Skills for Data Analytics
 
-Instead of only writing simple `SELECT` statements, this project helped me practice:
+For Data Analysts, some skills combine relatively strong salaries with substantial demand:
 
-- Joins
-- Aggregations
-- CTEs
-- Window of analysis
-- Grouping
-- Filtering aggregated results with `HAVING`
-- Ranking results
-- Combining multiple metrics
+- SQL — $97,237 and 398 jobs
+- Python — $101,397 and 236 jobs
+- Tableau — $99,288 and 230 jobs
+- Excel — $87,288 and 256 jobs
+- R — $100,499 and 148 jobs
+- Power BI — $97,431 and 110 jobs
 
----
+This reinforces the importance of **SQL**, **Python**, **visualization tools**, and **spreadsheet skills** in the *Data Analyst* market.
 
-# Conclusion
+### 💡 Most Important Insight
 
-## 1. What are the top-paying Data Engineer jobs?
+**SQL** and **Python** stand out as the strongest transferable skills between the two careers.
 
-### Insights
+SQL has:
 
-* The highest salaries in the dataset reach **$325,000 per year**, with two Data Engineer positions at Engtal.
-* The top 3 positions have salaries of **$325K, $325K, and $300K**, showing significant earning potential in Data Engineering.
-* Several senior-level roles such as **Staff Data Engineer, Principal Data Engineer, Director of Engineering, and Data Engineering Manager** appear in the top 10.
-* The results suggest that **senior and specialized Data Engineering roles** tend to dominate the highest-paying positions.
-* The presence of different companies and job titles among the top positions shows that high salaries are not limited to one specific company or title.
+568 Data Engineer jobs and 398 Data Analyst jobs
 
-**Overall takeaway:**
+Python has:
 
-> Data Engineering offers strong salary potential, particularly at senior, staff, principal, management, and specialized engineering levels.
+535 Data Engineer jobs and 236 Data Analyst jobs
 
----
+Both skills also have relatively strong average salaries in both fields.
 
-## 2. What skills are required for these top-paying jobs?
+This makes them particularly valuable for someone who hasn't yet decided whether to specialize in Data Engineering or Data Analytics.
 
-### Key Insights
+### 🎯 Career Takeaway
 
-* **Python** is the most common skill, appearing in **7 out of the 10** top-paying jobs.
-* **Spark** appears in **5 out of 10** jobs, highlighting the importance of distributed data processing in high-paying roles.
-* **Hadoop, Kafka, and Scala** each appear in **3 jobs**.
-* Other technologies such as **Databricks, Kubernetes, PySpark, Pandas, NumPy, and SQL** also appear among the top-paying positions.
-* The skills cover several areas including **programming, big-data processing, cloud, orchestration, and data infrastructure**.
+The analysis suggests a useful skill progression:
 
-**Overall takeaway:**
+For Data Analytics:
 
-> High-paying Data Engineer jobs generally require a **combination of skills**, with Python and Spark being particularly prominent rather than relying on one technology alone.
+`SQL → Excel → Python → Tableau / Power BI → Cloud & Data Platforms`
 
----
+For Data Engineering:
 
-## 3. What skills are most in demand for Data Engineers?
+`SQL → Python → Cloud → Spark → Airflow / Snowflake / Databricks`
 
-### Key Insights
+If the goal is to keep both career options open, **SQL** and **Python** provide the strongest foundation, after which specialization can be built depending on the desired career direction.
 
-* **SQL** is the most demanded skill, appearing in **14,213 job postings**.
-* **Python** is a very close second with **13,893 job postings**, only **320 fewer than SQL**.
-* **AWS** is the third most demanded skill with **8,570 postings**, showing strong demand for cloud computing.
-* **Azure** appears in **6,997 postings**, while **Spark** appears in **6,612**.
-* SQL and Python are significantly more common than the other three skills, making them especially important foundational skills for Data Engineers.
+Overall, the results indicate that Data Engineering tends to offer higher salary associations for shared skills, while Data Analytics has strong demand for **SQL, Excel, Python, Tableau, Power BI, and R**.
 
-**Overall takeaway:**
 
-> **SQL and Python are the two strongest foundational skills**, while AWS, Azure, and Spark are important complementary skills for the Data Engineering job market.
+# 🎯 What I Learned
+Through this project, I learned how SQL can be used not just to retrieve data, but to answer real-world business and career questions.
 
----
+Some of the key concepts I practiced include:
+Using CTEs to break complex problems into smaller steps
+Using window functions to rank records within categories
+Comparing multiple groups using PARTITION BY
+Connecting multiple relational tables using joins
+Using conditional aggregation to compare two categories
+Distinguishing between skill demand and salary
+Designing SQL queries around practical questions rather than simple data retrieval
 
-## 4. Which skills are associated with higher salaries?
+# 🚀 Future Improvements
+This project can be extended by adding:
+- 📍 Location-based salary comparisons
+- 🏢 Company-level analysis
+- 📅 Salary trends over time
+- ☁️ Cloud skill comparisons
+- 📊 Data visualization using Power BI or Tableau
+- 🧑‍💼 Experience-level analysis
+- 🌎 Comparison of remote vs non-remote opportunities
+- 📈 Skill combinations that frequently appear together
+- 💼 Entry-level vs senior-level job analysis
 
-### Key Insights
+# 🏁 Conclusion
+This project provides a SQL-based comparison of the Data Engineer and Data Analyst job markets.
+Instead of using salary alone to compare the careers, the analysis looks at the market from multiple perspectives:
+Top-paying jobs → Skills behind high-paying jobs → Skill demand → Top-paying skills → Cross-career skill comparison
+This approach provides a more practical understanding of the skills employers value and how those skills relate to salary and demand.
+Ultimately, the project demonstrates how SQL can transform raw job-posting data into actionable insights for career and skill development decisions.
 
-* **Assembly** has the highest average salary at **$192,500**.
-* It is followed by **Mongo ($182,223)** and **ggplot2 ($176,250)**.
-* **Rust ($172,819)** and **Clojure ($170,867)** are also associated with relatively high salaries.
-* Interestingly, some of the highest-paying skills are **specialized or niche technologies** rather than the most commonly demanded Data Engineering skills.
-* For example, **Kubernetes has an average salary of $158,190**, while **Kafka has $150,549**.
-* This demonstrates that **high salary and high demand are not necessarily the same thing**.
-
-**Overall takeaway:**
-
-> Some niche technologies are associated with very high salaries, but salary alone does not make a skill the best choice to learn because job availability also matters.
-
----
-
-## 5. What are the most optimal skills to learn?
-
-### Key Insights
-
-* **Kubernetes** has the highest average salary among the filtered skills at **$158,190**, with 56 job postings.
-* **Kafka** stands out as a particularly interesting skill because it combines a high average salary of **$150,549** with **134 job postings**.
-* **Spark** has the highest demand among the skills shown, with **237 job postings**, while having an average salary of **$139,838**.
-* **Airflow** also has strong demand with **151 postings** and an average salary of **$138,518**.
-* **Java** has 139 postings and an average salary of **$138,087**, making it another relatively high-demand skill.
-* Skills such as **NumPy and Cassandra** have high salaries but considerably fewer job postings, indicating a more specialized market.
-* This shows the trade-off between **salary and demand**: a skill with the highest salary isn't necessarily the most practical skill to prioritize.
-
-**Overall takeaway:**
-
-> The most optimal skills should be evaluated based on **both demand and salary**. Skills such as **Kafka, Spark, Airflow, and Java** provide a stronger balance between market demand and salary than simply choosing the highest-paying niche skill.
-
----
-
-### 🔥 Overall Project Insight
-
-After combining all five analyses, the biggest conclusion is:
-> **SQL and Python are essential foundational skills because of their extremely high demand, while technologies such as Spark, Kafka, Airflow, cloud platforms, and Kubernetes can help build a more specialized and potentially higher-paying Data Engineering skill set.**
-This gives your project a much stronger story:
-**High-paying jobs → Required skills → Market demand → Salary → Optimal skills**
-
-That progression makes the analysis feel like an actual **career-oriented data analysis project**, rather than just five unrelated SQL queries.
-
-This project provided a practical look at the Data Engineering job market by analyzing **salary, job demand, and required skills**.
-The analysis shows that choosing skills based on only one factor can be misleading. The most useful approach is to consider both **how frequently employers request a skill and the salary associated with jobs requiring it**.
-
-The analysis of top-paying jobs also shows that higher-paying Data Engineering roles tend to require a combination of technical skills rather than expertise in a single tool.
-
-Overall, the project helped me understand how SQL can be used to turn a large job-postings dataset into actionable career insights.
+# 👨‍💻 Author
+- Naaef Khan
+- Data Science | SQL | Data Analytics | Data Engineering
+- Project Focus: SQL-based Data Engineer vs Data Analyst Job Market Analysis
