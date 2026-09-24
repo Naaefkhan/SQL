@@ -1,4 +1,4 @@
-SELECT
+with optimal_skills as (SELECT
     skills_dim.skills,
     ROUND(AVG(CASE WHEN job_title_short = 'Data Engineer' THEN salary_year_avg END), 0) AS de_avg_salary,
     COUNT(CASE WHEN job_title_short = 'Data Engineer' THEN job_postings_fact.job_id END) AS de_job_count,
@@ -12,9 +12,10 @@ INNER JOIN skills_dim
 WHERE job_title_short IN ('Data Engineer', 'Data Analyst')
     AND salary_year_avg IS NOT NULL
     AND job_location = 'Anywhere'
-GROUP BY skills_dim.skills
-HAVING COUNT(CASE WHEN job_title_short = 'Data Engineer' THEN job_postings_fact.job_id END) > 10
-   AND COUNT(CASE WHEN job_title_short = 'Data Analyst' THEN job_postings_fact.job_id END) > 10
-ORDER BY  
-    ROUND(AVG(CASE WHEN job_title_short = 'Data Engineer' THEN salary_year_avg END), 0) 
-    - ROUND(AVG(CASE WHEN job_title_short = 'Data Analyst' THEN salary_year_avg END), 0) DESC;
+GROUP BY skills_dim.skills)
+select *
+from optimal_skills
+where de_job_count > 10
+   AND da_job_count > 10
+ORDER BY  de_avg_salary - da_avg_salary DESC;
+
