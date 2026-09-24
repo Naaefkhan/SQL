@@ -5,9 +5,13 @@ This project uses SQL and job posting data to compare the Data Engineer and Data
 
 Rather than looking only at salary, this analysis focuses on:
 💰 Highest-paying jobs
+
 🛠️ Skills required for the highest-paying jobs
+
 📈 Most in-demand skills
+
 💵 Highest-paying skills
+
 ⚖️ Skills that can be compared across both career paths
 
 The goal is to identify the differences between the two roles and understand which skills provide the strongest combination of salary and job-market demand.
