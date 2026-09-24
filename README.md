@@ -1,9 +1,10 @@
 # Introduction
 Choosing between Data Engineering and Data Analytics can be difficult because both careers involve working with data, but they require different skill sets and offer different career opportunities.
 
-This project uses SQL and job posting data to compare the Data Engineer and Data Analyst job markets from multiple perspectives.
+This project uses SQL and public job posting data to compare the Data Engineer and Data Analyst job markets from multiple perspectives.
 
 Rather than looking only at salary, this analysis focuses on:
+
 💰 Highest-paying jobs
 
 🛠️ Skills required for the highest-paying jobs
@@ -17,7 +18,7 @@ Rather than looking only at salary, this analysis focuses on:
 The goal is to identify the differences between the two roles and understand which skills provide the strongest combination of salary and job-market demand.
 
 
-The analysis was performed using SQL on a job-postings dataset. I used SQL joins, filtering, aggregation, CASE, CTEs, `COUNT()`, `AVG()`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, and `STRING_AGG()` to explore the data.
+The analysis was performed using SQL on a job-postings dataset. I used SQL joins, filtering, aggregation, CASE, CTEs, Window Functions, `COUNT()`, `AVG()`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, and `PARTITION BY` to explore the data.
 
 SQL queries? check them out here: [project_sql](./SQL_Data_Analysis_Project/)
 # Background
